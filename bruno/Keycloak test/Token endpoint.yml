@@ -1,0 +1,92 @@
+info:
+  name: Token endpoint
+  type: http
+  seq: 2
+
+http:
+  method: post
+  url: https://localhost:8080/realms/oneid/protocol/openid-connect/token
+  body:
+    type: form-urlencoded
+    data:
+      - name: grant_type
+        value: authorization_code
+      - name: client_id
+        value: portal
+      - name: redirect_uri
+        value: https://localhost:3000/callback
+      - name: code
+        value: "{{authorization_code}}"
+      - name: code_verifier
+        value: "{{code_verifier}}"
+  auth: inherit
+
+runtime:
+  variables:
+    - name: authorization_code
+      value: db12aae9-ac18-4f90-da9e-57125186c3f9.zehEvz7tandAr5T2I-lZ8V0K.c969c324-30c7-44ab-ae00-d6bda9e1e1b3
+  scripts:
+    - type: before-request
+      code: |-
+        const CryptoJS = require('crypto-js');
+
+        const verifier = bru.getEnvVar('code_verifier');
+        const challenge = bru.getEnvVar('code_challenge');
+
+        console.log(verifier)
+
+        if (
+          typeof verifier !== 'string' ||
+          !/^[A-Za-z0-9._~-]{43,128}$/.test(verifier)
+        ) {
+          throw new Error('Missing or malformed environment code_verifier.');
+        }
+
+        const calculated = CryptoJS.SHA256(verifier)
+          .toString(CryptoJS.enc.Base64)
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+
+        if (calculated !== challenge) {
+          throw new Error('Stored verifier and challenge do not match. Start a fresh flow.');
+        }
+    - type: after-response
+      code: |-
+        for (const name of ['access_token', 'id_token', 'refresh_token']) {
+          bru.deleteEnvVar(name);
+        }
+
+        if (res.getStatus() !== 200) {
+          throw new Error(
+            `Token exchange failed (HTTP ${res.getStatus()}); inspect the response body.`
+          );
+        }
+
+        const body = res.getBody();
+
+        if (
+          !body ||
+          typeof body.access_token !== 'string' ||
+          !body.access_token ||
+          typeof body.id_token !== 'string' ||
+          !body.id_token
+        ) {
+          throw new Error('Token response is missing access_token or id_token.');
+        }
+
+        bru.setEnvVar('access_token', body.access_token);
+        bru.setEnvVar('id_token', body.id_token);
+
+        if (typeof body.refresh_token === 'string' && body.refresh_token) {
+          bru.setEnvVar('refresh_token', body.refresh_token);
+        }
+
+        bru.deleteEnvVar('code_verifier');
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

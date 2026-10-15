@@ -1,0 +1,38 @@
+http:
+  routers:
+    keycloak:
+      entryPoints:
+        - keycloak
+      rule: "Host(`localhost`)"
+      service: keycloak
+      tls: {}
+
+    portal-callback:
+      entryPoints:
+        - callback
+      rule: "Host(`localhost`) && Path(`/callback`)"
+      service: portal-callback
+      middlewares:
+        - callback-headers
+      tls: {}
+
+  services:
+    keycloak:
+      loadBalancer:
+        servers:
+          - url: http://keycloak:8080
+
+    portal-callback:
+      loadBalancer:
+        servers:
+          - url: http://callback:80
+
+  middlewares:
+    callback-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        referrerPolicy: no-referrer
+        customResponseHeaders:
+          Cache-Control: no-store
+          Content-Security-Policy: "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"

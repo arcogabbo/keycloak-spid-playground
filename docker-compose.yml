@@ -1,0 +1,59 @@
+services:
+  traefik:
+    image: traefik:v3.6
+    command:
+      - --entrypoints.callback.address=:443
+      - --entrypoints.keycloak.address=:8443
+      - --providers.file.filename=/etc/traefik/callback.yml
+      - --api.dashboard=false
+    depends_on:
+      - callback
+      - keycloak
+    ports:
+      - "127.0.0.1:3000:443"
+      - "127.0.0.1:${KEYCLOAK_PORT:-8080}:8443"
+    volumes:
+      - ./config/traefik-callback.yml:/etc/traefik/callback.yml:ro
+    restart: unless-stopped
+
+  callback:
+    image: nginx:1.28-alpine
+    volumes:
+      - ./config/nginx-callback.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./callback/index.html:/usr/share/nginx/html/callback.html:ro
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_HOSTNAME: ${KEYCLOAK_URL:-https://localhost:8080}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?Set a local admin password}
+      PORTAL_REDIRECT_URI: ${PORTAL_REDIRECT_URI:-https://localhost:3000/callback}
+      UAT_OIDC_ENABLED: ${UAT_OIDC_ENABLED:-true}
+      UAT_OIDC_ISSUER_URL: ${UAT_OIDC_ISSUER_URL:-https://uat-idp.example.com}
+      UAT_OIDC_AUTHORIZATION_URL: ${UAT_OIDC_AUTHORIZATION_URL:-https://uat-idp.example.com/oidc/authorize}
+      UAT_OIDC_TOKEN_URL: ${UAT_OIDC_TOKEN_URL:-https://uat-idp.example.com/oidc/token}
+      UAT_OIDC_JWKS_URL: ${UAT_OIDC_JWKS_URL:-https://uat-idp.example.com/oidc/keys}
+      UAT_OIDC_CLIENT_ID: ${UAT_OIDC_CLIENT_ID:-replace-with-uat-client-id}
+      UAT_OIDC_CLIENT_SECRET: ${UAT_OIDC_CLIENT_SECRET:?Set the UAT broker client secret}
+      UAT_OIDC_CLIENT_AUTH_METHOD: ${UAT_OIDC_CLIENT_AUTH_METHOD:-client_secret_post}
+      PROD_OIDC_ENABLED: ${PROD_OIDC_ENABLED:-false}
+      PROD_OIDC_ISSUER_URL: ${PROD_OIDC_ISSUER_URL:-https://prod-idp.example.com}
+      PROD_OIDC_AUTHORIZATION_URL: ${PROD_OIDC_AUTHORIZATION_URL:-https://prod-idp.example.com/oidc/authorize}
+      PROD_OIDC_TOKEN_URL: ${PROD_OIDC_TOKEN_URL:-https://prod-idp.example.com/oidc/token}
+      PROD_OIDC_JWKS_URL: ${PROD_OIDC_JWKS_URL:-https://prod-idp.example.com/oidc/keys}
+      PROD_OIDC_CLIENT_ID: ${PROD_OIDC_CLIENT_ID:-replace-with-prod-client-id}
+      PROD_OIDC_CLIENT_SECRET: ${PROD_OIDC_CLIENT_SECRET:-not-configured}
+      PROD_OIDC_CLIENT_AUTH_METHOD: ${PROD_OIDC_CLIENT_AUTH_METHOD:-client_secret_post}
+    volumes:
+      - ./config/oneid-realm.json:/opt/keycloak/data/import/oneid-realm.json:ro
+      - keycloak-data:/opt/keycloak/data
+    restart: unless-stopped
+
+volumes:
+  keycloak-data:

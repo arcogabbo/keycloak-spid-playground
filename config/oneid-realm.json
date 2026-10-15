@@ -1,0 +1,285 @@
+{
+  "realm": "oneid",
+  "displayName": "External OIDC broker playground",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": true,
+  "editUsernameAllowed": false,
+  "defaultSignatureAlgorithm": "RS256",
+  "accessTokenLifespan": 300,
+  "identityProviders": [
+    {
+      "alias": "external-oidc-uat",
+      "displayName": "External OIDC UAT",
+      "providerId": "oidc",
+      "enabled": "${UAT_OIDC_ENABLED}",
+      "trustEmail": false,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "issuer": "${UAT_OIDC_ISSUER_URL}",
+        "authorizationUrl": "${UAT_OIDC_AUTHORIZATION_URL}",
+        "tokenUrl": "${UAT_OIDC_TOKEN_URL}",
+        "jwksUrl": "${UAT_OIDC_JWKS_URL}",
+        "clientId": "${UAT_OIDC_CLIENT_ID}",
+        "clientSecret": "${UAT_OIDC_CLIENT_SECRET}",
+        "clientAuthMethod": "${UAT_OIDC_CLIENT_AUTH_METHOD}",
+        "defaultScope": "openid",
+        "validateSignature": "true",
+        "useJwksUrl": "true",
+        "disableUserInfo": "true",
+        "forwardParameters": "idp",
+        "syncMode": "FORCE"
+      }
+    },
+    {
+      "alias": "external-oidc-prod",
+      "displayName": "External OIDC PROD",
+      "providerId": "oidc",
+      "enabled": "${PROD_OIDC_ENABLED}",
+      "trustEmail": false,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "issuer": "${PROD_OIDC_ISSUER_URL}",
+        "authorizationUrl": "${PROD_OIDC_AUTHORIZATION_URL}",
+        "tokenUrl": "${PROD_OIDC_TOKEN_URL}",
+        "jwksUrl": "${PROD_OIDC_JWKS_URL}",
+        "clientId": "${PROD_OIDC_CLIENT_ID}",
+        "clientSecret": "${PROD_OIDC_CLIENT_SECRET}",
+        "clientAuthMethod": "${PROD_OIDC_CLIENT_AUTH_METHOD}",
+        "defaultScope": "openid",
+        "validateSignature": "true",
+        "useJwksUrl": "true",
+        "disableUserInfo": "true",
+        "forwardParameters": "idp",
+        "syncMode": "FORCE"
+      }
+    }
+  ],
+  "identityProviderMappers": [
+    {
+      "name": "uat-username",
+      "identityProviderAlias": "external-oidc-uat",
+      "identityProviderMapper": "oidc-username-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "template": "${ALIAS}.${CLAIM.sub}",
+        "target": "LOCAL"
+      }
+    },
+    {
+      "name": "prod-username",
+      "identityProviderAlias": "external-oidc-prod",
+      "identityProviderMapper": "oidc-username-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "template": "${ALIAS}.${CLAIM.sub}",
+        "target": "LOCAL"
+      }
+    },
+    {
+      "name": "uat-name",
+      "identityProviderAlias": "external-oidc-uat",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "claim": "name",
+        "user.attribute": "identityName"
+      }
+    },
+    {
+      "name": "uat-dateOfBirth",
+      "identityProviderAlias": "external-oidc-uat",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "claim": "dateOfBirth",
+        "user.attribute": "dateOfBirth"
+      }
+    },
+    {
+      "name": "uat-familyName",
+      "identityProviderAlias": "external-oidc-uat",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "claim": "familyName",
+        "user.attribute": "familyName"
+      }
+    },
+    {
+      "name": "uat-fiscalNumber",
+      "identityProviderAlias": "external-oidc-uat",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "claim": "fiscalNumber",
+        "user.attribute": "fiscalNumber"
+      }
+    },
+    {
+      "name": "prod-name",
+      "identityProviderAlias": "external-oidc-prod",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "claim": "name",
+        "user.attribute": "identityName"
+      }
+    },
+    {
+      "name": "prod-dateOfBirth",
+      "identityProviderAlias": "external-oidc-prod",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "claim": "dateOfBirth",
+        "user.attribute": "dateOfBirth"
+      }
+    },
+    {
+      "name": "prod-familyName",
+      "identityProviderAlias": "external-oidc-prod",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "claim": "familyName",
+        "user.attribute": "familyName"
+      }
+    },
+    {
+      "name": "prod-fiscalNumber",
+      "identityProviderAlias": "external-oidc-prod",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "claim": "fiscalNumber",
+        "user.attribute": "fiscalNumber"
+      }
+    }
+  ],
+  "components": {
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "providerId": "declarative-user-profile",
+        "config": {
+          "kc.user.profile.config": [
+            "{\"attributes\":[{\"name\":\"username\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\"]}},{\"name\":\"email\",\"validations\":{\"email\":{},\"length\":{\"max\":255}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\"]}},{\"name\":\"firstName\",\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"lastName\",\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]}},{\"name\":\"identityName\",\"permissions\":{\"view\":[\"admin\"],\"edit\":[\"admin\"]}},{\"name\":\"dateOfBirth\",\"permissions\":{\"view\":[\"admin\"],\"edit\":[\"admin\"]}},{\"name\":\"familyName\",\"permissions\":{\"view\":[\"admin\"],\"edit\":[\"admin\"]}},{\"name\":\"fiscalNumber\",\"permissions\":{\"view\":[\"admin\"],\"edit\":[\"admin\"]}}]}"
+          ]
+        }
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "portal",
+      "name": "Portal PKCE client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": false,
+      "redirectUris": ["${PORTAL_REDIRECT_URI}"],
+      "defaultClientScopes": [],
+      "optionalClientScopes": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "subject",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-sub-mapper",
+          "config": {
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "web",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "email",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "config": {
+            "user.attribute": "email",
+            "claim.name": "email",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "identityName",
+            "claim.name": "name",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "dateOfBirth",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "dateOfBirth",
+            "claim.name": "dateOfBirth",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "familyName",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "familyName",
+            "claim.name": "familyName",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "fiscalNumber",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "fiscalNumber",
+            "claim.name": "fiscalNumber",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ]
+}

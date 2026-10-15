@@ -1,0 +1,25 @@
+name: test
+variables:
+  - secret: true
+    name: code_challenge
+    description: ""
+  - secret: true
+    name: state
+    description: ""
+  - secret: true
+    name: nonce
+    description: ""
+  - secret: true
+    name: authorization_url
+    description: ""
+  - secret: true
+    name: idp
+    description: ""
+  - secret: true
+    name: access_token
+  - secret: true
+    name: id_token
+    description: ""
+  - secret: true
+    name: refresh_token
+    description: ""

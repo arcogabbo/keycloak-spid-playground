@@ -1,0 +1,84 @@
+info:
+  name: Auth (Entrypoint)
+  type: http
+  seq: 1
+
+http:
+  method: get
+  url: mocked
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        req.setMaxRedirects(0);
+
+        const { nanoid } = require('nanoid');
+        const CryptoJS = require('crypto-js');
+
+        const base64url = (value) =>
+          value.toString(CryptoJS.enc.Base64)
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '');
+
+        const codeVerifier = [nanoid(), nanoid(), nanoid()].join('');
+        if (!/^[A-Za-z0-9._~-]{43,128}$/.test(codeVerifier)) {
+          throw new Error('Generated code_verifier is not PKCE-compatible. Stop this flow.');
+        }
+        const codeChallenge = base64url(CryptoJS.SHA256(codeVerifier));
+        const state = [nanoid(), nanoid()].join('');
+        const nonce = [nanoid(), nanoid()].join('');
+
+        for (const name of [
+          'authorization_code',
+          'access_token',
+          'id_token',
+          'refresh_token'
+        ]) {
+          bru.deleteEnvVar(name);
+        }
+
+        bru.setEnvVar('code_verifier', codeVerifier);
+        bru.setEnvVar('code_challenge', codeChallenge);
+        bru.setEnvVar('state', state);
+        bru.setEnvVar('nonce', nonce);
+
+        const params = {
+          response_type: 'code',
+          client_id: 'portal',
+          redirect_uri: 'https://localhost:3000/callback',
+          scope: 'openid',
+          state,
+          nonce,
+          code_challenge: codeChallenge,
+          code_challenge_method: 'S256',
+          kc_idp_hint: 'external-oidc-uat',
+          prompt: 'login'
+        };
+
+        const idp = bru.getEnvVar('idp');
+        if (idp) {
+          params.idp = idp;
+        }
+
+        const query = Object.entries(params)
+          .map(([name, value]) =>
+            `${encodeURIComponent(name)}=${encodeURIComponent(value)}`
+          )
+          .join('&');
+
+        const authUrl =
+          'https://localhost:8080/realms/oneid/protocol/openid-connect/auth?' +
+          query;
+
+        bru.setEnvVar('authorization_url', authUrl);
+        console.log(authUrl.toString());
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: false
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
